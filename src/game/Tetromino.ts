@@ -172,9 +172,13 @@ const TETROMINO_SHAPES: Record<TetrominoType, number[][][]> = {
  * @returns A new Tetromino instance
  */
 export function createTetromino(type: TetrominoType): Tetromino {
+  const shapes = TETROMINO_SHAPES[type];
+  if (!shapes || !shapes[0]) {
+    throw new Error(`Invalid tetromino type or missing initial shape for type: ${type}`);
+  }
   return {
     type,
-    shape: TETROMINO_SHAPES[type]![0]!,
+    shape: shapes[0],
     color: TETROMINO_COLORS[type],
     rotationState: 0,
   };
@@ -194,7 +198,10 @@ export function rotateTetromino(piece: Tetromino, direction: RotationDirection):
     return piece;
   }
 
-  const shapes = TETROMINO_SHAPES[piece.type]!;
+  const shapes = TETROMINO_SHAPES[piece.type];
+  if (!shapes) {
+    throw new Error(`Invalid tetromino type: ${piece.type}`);
+  }
   const numRotations = shapes.length;
 
   // Calculate new rotation state
@@ -205,17 +212,23 @@ export function rotateTetromino(piece: Tetromino, direction: RotationDirection):
     newRotationState = (piece.rotationState - 1 + numRotations) % numRotations;
   }
 
+  const newShape = shapes[newRotationState];
+  if (!newShape) {
+    throw new Error(
+      `Invalid rotation state: ${newRotationState} for tetromino type: ${piece.type}`
+    );
+  }
+
   // TODO: Add SRS wall kick logic here
   return {
     ...piece,
-    shape: shapes[newRotationState]!,
+    shape: newShape,
     rotationState: newRotationState,
   };
 }
 
 /**
  * Get SRS wall kick offsets for a rotation
- * TODO: Implement SRS wall kick tables
  *
  * @param piece - The tetromino being rotated
  * @param fromRotation - Starting rotation state
@@ -227,23 +240,139 @@ export function getWallKickOffsets(
   fromRotation: number,
   toRotation: number
 ): Array<[number, number]> {
-  // TODO: Implement proper SRS wall kick tables
-  // Different tables for I-piece vs other pieces
-  // See: https://tetris.wiki/Super_Rotation_System
+  // JLSTZ Wall Kicks
+  const JLSTZ_KICKS: Record<string, [number, number][]> = {
+    '0-1': [
+      [0, 0],
+      [-1, 0],
+      [-1, 1],
+      [0, -2],
+      [-1, -2],
+    ],
+    '1-0': [
+      [0, 0],
+      [1, 0],
+      [1, -1],
+      [0, 2],
+      [1, 2],
+    ],
+    '1-2': [
+      [0, 0],
+      [1, 0],
+      [1, -1],
+      [0, 2],
+      [1, 2],
+    ],
+    '2-1': [
+      [0, 0],
+      [-1, 0],
+      [-1, 1],
+      [0, -2],
+      [-1, -2],
+    ],
+    '2-3': [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, -2],
+      [1, -2],
+    ],
+    '3-2': [
+      [0, 0],
+      [-1, 0],
+      [-1, -1],
+      [0, 2],
+      [-1, 2],
+    ],
+    '3-0': [
+      [0, 0],
+      [-1, 0],
+      [-1, -1],
+      [0, 2],
+      [-1, 2],
+    ],
+    '0-3': [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, -2],
+      [1, -2],
+    ],
+  };
 
-  // Placeholder: basic offset tests
-  return [
-    [0, 0], // No offset
-    [-1, 0], // Left
-    [1, 0], // Right
-    [0, -1], // Up
-    [-1, -1], // Left + Up
-  ];
+  // I Wall Kicks
+  const I_KICKS: Record<string, [number, number][]> = {
+    '0-1': [
+      [0, 0],
+      [-2, 0],
+      [1, 0],
+      [-2, -1],
+      [1, 2],
+    ],
+    '1-0': [
+      [0, 0],
+      [2, 0],
+      [-1, 0],
+      [2, 1],
+      [-1, -2],
+    ],
+    '1-2': [
+      [0, 0],
+      [-1, 0],
+      [2, 0],
+      [-1, 2],
+      [2, -1],
+    ],
+    '2-1': [
+      [0, 0],
+      [1, 0],
+      [-2, 0],
+      [1, -2],
+      [-2, 1],
+    ],
+    '2-3': [
+      [0, 0],
+      [2, 0],
+      [-1, 0],
+      [2, 1],
+      [-1, -2],
+    ],
+    '3-2': [
+      [0, 0],
+      [-2, 0],
+      [1, 0],
+      [-2, -1],
+      [1, 2],
+    ],
+    '3-0': [
+      [0, 0],
+      [1, 0],
+      [-2, 0],
+      [1, -2],
+      [-2, 1],
+    ],
+    '0-3': [
+      [0, 0],
+      [-1, 0],
+      [2, 0],
+      [-1, 2],
+      [2, -1],
+    ],
+  };
+
+  const key = `${fromRotation}-${toRotation}`;
+
+  if (piece.type === 'I') {
+    return I_KICKS[key] || [[0, 0]];
+  } else if (piece.type === 'O') {
+    return [[0, 0]];
+  } else {
+    return JLSTZ_KICKS[key] || [[0, 0]];
+  }
 }
 
 /**
  * 7-Bag randomizer for fair piece distribution
- * TODO: Implement 7-bag randomizer
  *
  * @see GAME_DESIGN.md for piece generation rules
  */
@@ -253,20 +382,19 @@ export class PieceGenerator {
 
   /**
    * Get the next piece from the bag
-   * TODO: Implement bag refill and shuffle logic
    */
   public next(): Tetromino {
     if (this.bag.length === 0) {
       this.refillBag();
     }
 
-    const type = this.bag.pop()!;
+    const type = this.bag.pop();
+    if (!type) throw new Error('Bag is empty after refill');
     return createTetromino(type);
   }
 
   /**
    * Refill and shuffle the bag
-   * TODO: Implement Fisher-Yates shuffle
    */
   private refillBag(): void {
     this.bag = [...this.allPieces];
@@ -275,23 +403,28 @@ export class PieceGenerator {
 
   /**
    * Shuffle the bag using Fisher-Yates algorithm
-   * TODO: Implement proper shuffle
    */
   private shuffle(): void {
     for (let i = this.bag.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [this.bag[i], this.bag[j]] = [this.bag[j]!, this.bag[i]!];
+      const temp = this.bag[i];
+      const swap = this.bag[j];
+      if (temp && swap) {
+        this.bag[i] = swap;
+        this.bag[j] = temp;
+      }
     }
   }
 
   /**
    * Peek at the next piece without removing it
-   * TODO: Implement peek functionality
    */
   public peek(): Tetromino {
     if (this.bag.length === 0) {
       this.refillBag();
     }
-    return createTetromino(this.bag[this.bag.length - 1]!);
+    const type = this.bag[this.bag.length - 1];
+    if (!type) throw new Error('Bag is empty after refill');
+    return createTetromino(type);
   }
 }

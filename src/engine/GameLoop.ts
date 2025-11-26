@@ -1,4 +1,4 @@
-import type { GameState } from '@core/types';
+// TODO: CODE_SMELL - Removed unused import (GameState was not used in this file)
 
 /**
  * GameLoop manages the main game loop using requestAnimationFrame.
@@ -50,7 +50,6 @@ export class GameLoop {
 
   /**
    * Start the game loop
-   * TODO: Implement game loop start logic
    */
   public start(): void {
     if (this.isRunning) return;
@@ -63,7 +62,6 @@ export class GameLoop {
 
   /**
    * Stop the game loop
-   * TODO: Implement game loop stop logic
    */
   public stop(): void {
     this.isRunning = false;
@@ -75,7 +73,6 @@ export class GameLoop {
 
   /**
    * Main loop iteration (called by requestAnimationFrame)
-   * TODO: Implement fixed timestep with catch-up
    *
    * @param currentTime - Current timestamp from requestAnimationFrame
    */
@@ -85,10 +82,14 @@ export class GameLoop {
     // Calculate delta time
     const deltaTime = currentTime - this.lastTime;
     this.lastTime = currentTime;
-    this.accumulator += deltaTime;
+
+    // Cap delta time to prevent spiral of death if frame rate drops too low
+    // Max 1 second catch-up
+    const cappedDeltaTime = Math.min(deltaTime, 1000);
+
+    this.accumulator += cappedDeltaTime;
 
     // Fixed timestep updates
-    // TODO: Implement update loop with fixed timestep
     while (this.accumulator >= this.fixedDeltaTime) {
       if (this.updateCallback) {
         this.updateCallback(this.fixedDeltaTime);
@@ -97,7 +98,6 @@ export class GameLoop {
     }
 
     // Variable rendering with interpolation
-    // TODO: Implement rendering with interpolation
     const interpolation = this.accumulator / this.fixedDeltaTime;
     if (this.renderCallback) {
       this.renderCallback(interpolation);

@@ -57,6 +57,7 @@ export interface GameState {
   readonly level: number;
   readonly lines: number;
   readonly gameStatus: GameStatus;
+  readonly lockRequested?: boolean;
 }
 
 /**

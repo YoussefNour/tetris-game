@@ -5,13 +5,6 @@ import { GAME_CONFIG } from '@core/types';
  * Board manages the game grid and piece placement.
  * Handles collision detection, line clearing, and board state.
  *
- * TODO: Implement the following methods:
- * - canPlacePiece(): Collision detection
- * - lockPiece(): Lock piece to board
- * - clearLines(): Detect and clear completed lines
- * - getCell(): Get cell value at position
- * - setCell(): Set cell value at position
- *
  * @see ARCHITECTURE.md for board system design
  * @see GAME_DESIGN.md for line clearing rules
  */
@@ -22,23 +15,26 @@ export class Board {
 
   constructor(
     width: number = GAME_CONFIG.BOARD_WIDTH,
-    height: number = GAME_CONFIG.BOARD_HEIGHT
+    height: number = GAME_CONFIG.BOARD_HEIGHT,
+    grid?: CellType[][]
   ) {
     this.width = width;
     this.height = height;
-    this.grid = this.createEmptyGrid();
+    this.grid = grid ? grid.map((row) => [...row]) : this.createEmptyGrid();
   }
 
   /**
    * Create an empty grid
-   * TODO: Initialize grid with empty cells
    */
   private createEmptyGrid(): CellType[][] {
     const grid: CellType[][] = [];
     for (let y = 0; y < this.height; y++) {
       grid[y] = [];
       for (let x = 0; x < this.width; x++) {
-        grid[y]![x] = 0;
+        const row = grid[y];
+        if (row) {
+          row[x] = 0;
+        }
       }
     }
     return grid;
@@ -46,7 +42,6 @@ export class Board {
 
   /**
    * Get cell value at position
-   * TODO: Implement bounds checking
    *
    * @param x - X coordinate
    * @param y - Y coordinate
@@ -61,7 +56,6 @@ export class Board {
 
   /**
    * Set cell value at position
-   * TODO: Implement bounds checking and validation
    *
    * @param x - X coordinate
    * @param y - Y coordinate
@@ -71,14 +65,14 @@ export class Board {
     if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
       return;
     }
-    if (this.grid[y]) {
-      this.grid[y]![x] = value;
+    const row = this.grid[y];
+    if (row) {
+      row[x] = value;
     }
   }
 
   /**
    * Check if a piece can be placed at the given position
-   * TODO: Implement SRS collision detection
    *
    * @param piece - The tetromino to check
    * @param position - The position to check
@@ -87,10 +81,12 @@ export class Board {
   public canPlacePiece(piece: Tetromino, position: Position): boolean {
     const shape = piece.shape;
 
-    // TODO: Iterate through piece shape and check each cell
     for (let row = 0; row < shape.length; row++) {
-      for (let col = 0; col < shape[row]!.length; col++) {
-        if (shape[row]![col] !== 0) {
+      const shapeRow = shape[row];
+      if (!shapeRow) continue;
+
+      for (let col = 0; col < shapeRow.length; col++) {
+        if (shapeRow[col] !== 0) {
           const boardX = position.x + col;
           const boardY = position.y + row;
 
@@ -115,7 +111,6 @@ export class Board {
 
   /**
    * Lock a piece to the board
-   * TODO: Implement piece locking logic
    *
    * @param piece - The tetromino to lock
    * @param position - The position to lock at
@@ -123,15 +118,17 @@ export class Board {
   public lockPiece(piece: Tetromino, position: Position): void {
     const shape = piece.shape;
 
-    // TODO: Place piece cells on board
     for (let row = 0; row < shape.length; row++) {
-      for (let col = 0; col < shape[row]!.length; col++) {
-        if (shape[row]![col] !== 0) {
+      const shapeRow = shape[row];
+      if (!shapeRow) continue;
+
+      for (let col = 0; col < shapeRow.length; col++) {
+        if (shapeRow[col] !== 0) {
           const boardX = position.x + col;
           const boardY = position.y + row;
 
           if (boardY >= 0 && boardY < this.height) {
-            this.setCell(boardX, boardY, shape[row]![col] as CellType);
+            this.setCell(boardX, boardY, shapeRow[col] as CellType);
           }
         }
       }
@@ -140,7 +137,6 @@ export class Board {
 
   /**
    * Clear completed lines and return count
-   * TODO: Implement line detection and clearing
    *
    * @returns Number of lines cleared
    */
@@ -148,7 +144,7 @@ export class Board {
     let linesCleared = 0;
     const linesToClear: number[] = [];
 
-    // TODO: Detect completed lines
+    // Detect completed lines
     for (let y = 0; y < this.height; y++) {
       let isComplete = true;
       for (let x = 0; x < this.width; x++) {
@@ -162,8 +158,8 @@ export class Board {
       }
     }
 
-    // TODO: Remove completed lines and shift down
-    for (const lineY of linesToClear.reverse()) {
+    // Remove completed lines and shift down
+    for (const lineY of linesToClear) {
       this.grid.splice(lineY, 1);
       this.grid.unshift(new Array(this.width).fill(0) as CellType[]);
       linesCleared++;
@@ -174,7 +170,6 @@ export class Board {
 
   /**
    * Check if board is empty
-   * TODO: Implement empty check
    */
   public isEmpty(): boolean {
     for (let y = 0; y < this.height; y++) {
@@ -189,7 +184,6 @@ export class Board {
 
   /**
    * Reset the board to empty state
-   * TODO: Implement board reset
    */
   public reset(): void {
     this.grid = this.createEmptyGrid();
@@ -197,9 +191,8 @@ export class Board {
 
   /**
    * Get a copy of the grid (for rendering)
-   * TODO: Return immutable copy
    */
   public getGrid(): ReadonlyArray<ReadonlyArray<CellType>> {
-    return this.grid;
+    return this.grid.map((row) => [...row]);
   }
 }

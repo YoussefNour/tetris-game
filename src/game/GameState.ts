@@ -1,24 +1,19 @@
-import type { GameState, GameStatus, Position } from '@core/types';
+import type { GameState, Position, CellType } from '@core/types';
 import { GAME_CONFIG } from '@core/types';
 import { Board } from './Board';
 import { PieceGenerator } from './Tetromino';
+import { calculateDropSpeed } from '@utils/helpers';
 
 /**
  * GameStateManager manages the game state using immutable updates.
  * Implements state transitions and game logic.
- *
- * TODO: Implement the following:
- * - State initialization
- * - State update methods (move, rotate, drop)
- * - Score calculation
- * - Level progression
- * - Game over detection
  *
  * @see ARCHITECTURE.md for state management design
  */
 export class GameStateManager {
   private state: GameState;
   private pieceGenerator: PieceGenerator;
+  private gravityAccumulator = 0;
 
   constructor() {
     this.pieceGenerator = new PieceGenerator();
@@ -27,16 +22,15 @@ export class GameStateManager {
 
   /**
    * Create initial game state
-   * TODO: Implement proper initialization
    */
   private createInitialState(): GameState {
     const board = new Board();
     const nextPiece = this.pieceGenerator.next();
 
     return {
-      board: board.getGrid() as any, // TODO: Fix type
+      board: board.getGrid() as unknown as CellType[][], // Cast to match CellType[][]
       currentPiece: null,
-      currentPosition: { x: 3, y: 0 },
+      currentPosition: { x: GAME_CONFIG.SPAWN_POSITION_X, y: GAME_CONFIG.SPAWN_POSITION_Y },
       nextPiece,
       heldPiece: null,
       canHold: true,
@@ -55,8 +49,14 @@ export class GameStateManager {
   }
 
   /**
+   * Set the game state (used by InputManager)
+   */
+  public setState(newState: GameState): void {
+    this.state = newState;
+  }
+
+  /**
    * Start a new game
-   * TODO: Implement game start logic
    */
   public startGame(): void {
     this.state = {
@@ -67,101 +67,118 @@ export class GameStateManager {
   }
 
   /**
+   * Update game state (called by GameLoop)
+   * Handles gravity and locking
+   */
+  public update(deltaTime: number): void {
+    if (this.state.gameStatus !== 'playing') return;
+
+    // Check for lock request (e.g. from Hard Drop)
+    if (this.state.lockRequested) {
+      this.lockPiece();
+      // Remove lock request flag
+      this.state = { ...this.state, lockRequested: undefined };
+      return;
+    }
+
+    // Handle gravity
+    const dropSpeed = calculateDropSpeed(this.state.level);
+    this.gravityAccumulator += deltaTime;
+
+    if (this.gravityAccumulator >= dropSpeed) {
+      this.gravityAccumulator -= dropSpeed;
+      this.applyGravity();
+    }
+  }
+
+  /**
+   * Apply gravity (move piece down)
+   */
+  private applyGravity(): void {
+    if (!this.state.currentPiece) return;
+
+    const board = new Board(GAME_CONFIG.BOARD_WIDTH, GAME_CONFIG.BOARD_HEIGHT, this.state.board);
+
+    const newPosition: Position = {
+      x: this.state.currentPosition.x,
+      y: this.state.currentPosition.y + 1,
+    };
+
+    if (board.canPlacePiece(this.state.currentPiece, newPosition)) {
+      this.state = {
+        ...this.state,
+        currentPosition: newPosition,
+      };
+    } else {
+      // Lock piece if it can't move down
+      this.lockPiece();
+    }
+  }
+
+  /**
    * Spawn a new piece
-   * TODO: Implement piece spawning with game over check
    */
   private spawnPiece(): void {
-    // TODO: Check if spawn position is valid
-    // TODO: If not valid, trigger game over
-    // TODO: Otherwise, spawn piece and get next piece
-    // TODO: CODE_SMELL - Magic numbers: spawn position { x: 3, y: 0 } should be GAME_CONFIG constant
-
     const currentPiece = this.state.nextPiece;
     const nextPiece = this.pieceGenerator.next();
+    const spawnPosition = { x: GAME_CONFIG.SPAWN_POSITION_X, y: GAME_CONFIG.SPAWN_POSITION_Y };
 
-    // TODO: CODE_SMELL - Inconsistent state management: use setState() method instead of direct mutation
+    // Check for Game Over (collision at spawn)
+    const board = new Board(GAME_CONFIG.BOARD_WIDTH, GAME_CONFIG.BOARD_HEIGHT, this.state.board);
+
+    // Create a temporary piece to check collision
+    const tempPiece = { ...currentPiece, rotationState: 0 };
+
+    if (!board.canPlacePiece(tempPiece, spawnPosition)) {
+      this.state = {
+        ...this.state,
+        gameStatus: 'gameOver',
+      };
+      return;
+    }
+
     this.state = {
       ...this.state,
       currentPiece,
-      currentPosition: { x: 3, y: 0 },
+      currentPosition: spawnPosition,
       nextPiece,
       canHold: true,
     };
   }
 
   /**
-   * Move current piece
-   * TODO: Implement movement with collision detection
-   *
-   * @param dx - Horizontal movement (-1 = left, 1 = right)
-   * @param dy - Vertical movement (1 = down)
-   */
-  public movePiece(dx: number, dy: number): void {
-    if (!this.state.currentPiece || this.state.gameStatus !== 'playing') {
-      return;
-    }
-
-    const newPosition: Position = {
-      x: this.state.currentPosition.x + dx,
-      y: this.state.currentPosition.y + dy,
-    };
-
-    // TODO: Check collision with Board.canPlacePiece()
-    // TODO: If valid, update position
-    // TODO: If moving down and collision, lock piece
-
-    this.state = {
-      ...this.state,
-      currentPosition: newPosition,
-    };
-  }
-
-  /**
-   * Rotate current piece
-   * TODO: Implement rotation with SRS wall kicks
-   *
-   * @param direction - Rotation direction
-   */
-  public rotatePiece(direction: 'CW' | 'CCW'): void {
-    if (!this.state.currentPiece || this.state.gameStatus !== 'playing') {
-      return;
-    }
-
-    // TODO: Attempt rotation with wall kick tests
-    // TODO: Update piece if successful
-  }
-
-  /**
-   * Hard drop current piece
-   * TODO: Implement hard drop with scoring
-   */
-  public hardDrop(): void {
-    if (!this.state.currentPiece || this.state.gameStatus !== 'playing') {
-      return;
-    }
-
-    // TODO: Calculate drop distance
-    // TODO: Update score (HARD_DROP_POINTS × distance)
-    // TODO: Lock piece immediately
-  }
-
-  /**
    * Lock current piece to board
-   * TODO: Implement piece locking and line clearing
    */
   private lockPiece(): void {
     if (!this.state.currentPiece) return;
 
-    // TODO: Lock piece to board using Board.lockPiece()
-    // TODO: Clear lines using Board.clearLines()
-    // TODO: Update score based on lines cleared
-    // TODO: Update level if needed
-    // TODO: Spawn next piece
+    const board = new Board(GAME_CONFIG.BOARD_WIDTH, GAME_CONFIG.BOARD_HEIGHT, this.state.board);
+
+    // Lock piece
+    board.lockPiece(this.state.currentPiece, this.state.currentPosition);
+
+    // Clear lines
+    const linesCleared = board.clearLines();
+
+    // Calculate score and level
+    const points = this.calculateScore(linesCleared);
+    const newLines = this.state.lines + linesCleared;
+    const newLevel = this.calculateLevel(newLines);
+
+    this.state = {
+      ...this.state,
+      board: board.getGrid() as unknown as CellType[][],
+      currentPiece: null,
+      score: this.state.score + points,
+      lines: newLines,
+      level: newLevel,
+    };
+
+    this.spawnPiece();
   }
 
   /**
    * Calculate score for line clears
-   * TODO: Implement scoring system from GAME_DESIGN.md
    *
    * @param linesCleared - Number of lines cleared
    * @returns Points earned
@@ -185,22 +202,20 @@ export class GameStateManager {
 
   /**
    * Calculate level based on lines cleared
-   * TODO: Implement level progression
    *
    * @param totalLines - Total lines cleared
    * @returns Current level
    */
   private calculateLevel(totalLines: number): number {
-    return Math.floor(totalLines / GAME_CONFIG.LINES_PER_LEVEL) + 1;
+    const level = Math.floor(totalLines / GAME_CONFIG.LINES_PER_LEVEL) + 1;
+    return Math.min(level, GAME_CONFIG.MAX_LEVEL);
   }
 
   /**
    * Pause the game
-   * TODO: Implement pause logic
    */
   public pause(): void {
     if (this.state.gameStatus === 'playing') {
-      // TODO: CODE_SMELL - Inconsistent state management: use setState() method instead of direct mutation
       this.state = {
         ...this.state,
         gameStatus: 'paused',
@@ -210,11 +225,9 @@ export class GameStateManager {
 
   /**
    * Resume the game
-   * TODO: Implement resume logic
    */
   public resume(): void {
     if (this.state.gameStatus === 'paused') {
-      // TODO: CODE_SMELL - Inconsistent state management: use setState() method instead of direct mutation
       this.state = {
         ...this.state,
         gameStatus: 'playing',
@@ -224,9 +237,10 @@ export class GameStateManager {
 
   /**
    * Reset the game
-   * TODO: Implement game reset
    */
   public reset(): void {
     this.state = this.createInitialState();
+    this.gravityAccumulator = 0;
+    this.pieceGenerator = new PieceGenerator(); // Reset bag
   }
 }
