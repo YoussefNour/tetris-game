@@ -2,6 +2,15 @@ import { InputCommand, GameState, GAME_CONFIG, Position, RotationDirection } fro
 import { Board } from './Board';
 import { rotateTetromino, getWallKickOffsets } from './Tetromino';
 
+function isCommandAllowed(gameState: GameState): boolean {
+  if (gameState.lastSpawnTime && GAME_CONFIG.SPAWN_DELAY) {
+    if (Date.now() - gameState.lastSpawnTime < GAME_CONFIG.SPAWN_DELAY) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export class MoveCommand implements InputCommand {
   constructor(
     private dx: number,
@@ -9,7 +18,11 @@ export class MoveCommand implements InputCommand {
   ) {}
 
   execute(gameState: GameState): GameState {
-    if (!gameState.currentPiece || gameState.gameStatus !== 'playing') {
+    if (
+      !gameState.currentPiece ||
+      gameState.gameStatus !== 'playing' ||
+      !isCommandAllowed(gameState)
+    ) {
       return gameState;
     }
 
@@ -35,7 +48,11 @@ export class RotateCommand implements InputCommand {
   constructor(private direction: RotationDirection) {}
 
   execute(gameState: GameState): GameState {
-    if (!gameState.currentPiece || gameState.gameStatus !== 'playing') {
+    if (
+      !gameState.currentPiece ||
+      gameState.gameStatus !== 'playing' ||
+      !isCommandAllowed(gameState)
+    ) {
       return gameState;
     }
 
@@ -69,7 +86,11 @@ export class RotateCommand implements InputCommand {
 
 export class SoftDropCommand implements InputCommand {
   execute(gameState: GameState): GameState {
-    if (!gameState.currentPiece || gameState.gameStatus !== 'playing') {
+    if (
+      !gameState.currentPiece ||
+      gameState.gameStatus !== 'playing' ||
+      !isCommandAllowed(gameState)
+    ) {
       return gameState;
     }
 
@@ -94,7 +115,11 @@ export class SoftDropCommand implements InputCommand {
 
 export class HardDropCommand implements InputCommand {
   execute(gameState: GameState): GameState {
-    if (!gameState.currentPiece || gameState.gameStatus !== 'playing') {
+    if (
+      !gameState.currentPiece ||
+      gameState.gameStatus !== 'playing' ||
+      !isCommandAllowed(gameState)
+    ) {
       return gameState;
     }
 
@@ -145,7 +170,12 @@ export class HardDropCommand implements InputCommand {
 
 export class HoldCommand implements InputCommand {
   execute(gameState: GameState): GameState {
-    if (!gameState.currentPiece || !gameState.canHold || gameState.gameStatus !== 'playing') {
+    if (
+      !gameState.currentPiece ||
+      !gameState.canHold ||
+      gameState.gameStatus !== 'playing' ||
+      !isCommandAllowed(gameState)
+    ) {
       return gameState;
     }
 

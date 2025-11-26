@@ -58,6 +58,7 @@ export interface GameState {
   readonly lines: number;
   readonly gameStatus: GameStatus;
   readonly lockRequested?: boolean;
+  readonly lastSpawnTime?: number;
 }
 
 /**
@@ -87,6 +88,7 @@ export const GAME_CONFIG = {
   LINE_CLEAR_DELAY: 300,
   DAS_DELAY: 133, // Delayed Auto Shift
   ARR_DELAY: 33, // Auto Repeat Rate
+  SPAWN_DELAY: 200, // Debounce delay after spawn
 
   // Scoring
   SCORE_SINGLE: 100,

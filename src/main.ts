@@ -77,7 +77,7 @@ function main(): void {
     gameStateManager.update(deltaTime);
   });
 
-  gameLoop.setRenderCallback((interpolation: number) => {
+  gameLoop.setRenderCallback((_interpolation: number) => {
     const state = gameStateManager.getState();
 
     // Clear canvas

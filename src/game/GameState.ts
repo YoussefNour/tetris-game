@@ -143,6 +143,7 @@ export class GameStateManager {
       currentPosition: spawnPosition,
       nextPiece,
       canHold: true,
+      lastSpawnTime: Date.now(),
     };
   }
 
