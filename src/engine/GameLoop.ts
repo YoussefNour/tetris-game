@@ -1,3 +1,4 @@
+/* eslint-env browser */
 // TODO: CODE_SMELL - Removed unused import (GameState was not used in this file)
 
 /**
@@ -15,10 +16,12 @@
  */
 export class GameLoop {
   private isRunning = false;
+  private paused = false;
   private lastTime = 0;
   private accumulator = 0;
   private readonly fixedDeltaTime = 1000 / 60; // 60 FPS
   private animationFrameId: number | null = null;
+  private escapeListenerAttached = false;
 
   /**
    * Callback for game logic updates
@@ -49,14 +52,37 @@ export class GameLoop {
   }
 
   /**
+   * Escape key handler used for pausing/resuming the loop.
+   */
+  private handleEscapeKey = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') {
+      this.togglePause();
+    }
+  };
+
+  private attachEscapeListener(): void {
+    if (this.escapeListenerAttached) return;
+    window.addEventListener('keydown', this.handleEscapeKey);
+    this.escapeListenerAttached = true;
+  }
+
+  private detachEscapeListener(): void {
+    if (!this.escapeListenerAttached) return;
+    window.removeEventListener('keydown', this.handleEscapeKey);
+    this.escapeListenerAttached = false;
+  }
+
+  /**
    * Start the game loop
    */
   public start(): void {
     if (this.isRunning) return;
 
     this.isRunning = true;
+    this.paused = false;
     this.lastTime = performance.now();
     this.accumulator = 0;
+    this.attachEscapeListener();
     this.tick(this.lastTime);
   }
 
@@ -69,6 +95,43 @@ export class GameLoop {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
+    this.paused = false;
+    this.detachEscapeListener();
+  }
+
+  /**
+   * Pause the game loop without resetting state.
+   */
+  public pause(): void {
+    if (!this.isRunning || this.paused) return;
+    this.paused = true;
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+  }
+
+  /**
+   * Resume the game loop after a pause.
+   */
+  public resume(): void {
+    if (!this.isRunning || !this.paused) return;
+    this.paused = false;
+    this.lastTime = performance.now();
+    this.attachEscapeListener();
+    this.tick(this.lastTime);
+  }
+
+  /**
+   * Toggle pause/resume
+   */
+  public togglePause(): void {
+    if (!this.isRunning) return;
+    if (this.paused) {
+      this.resume();
+    } else {
+      this.pause();
+    }
   }
 
   /**
@@ -77,7 +140,7 @@ export class GameLoop {
    * @param currentTime - Current timestamp from requestAnimationFrame
    */
   private tick(currentTime: number): void {
-    if (!this.isRunning) return;
+    if (!this.isRunning || this.paused) return;
 
     // Calculate delta time
     const deltaTime = currentTime - this.lastTime;
