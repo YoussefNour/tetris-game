@@ -11,7 +11,7 @@
 
 ## Overview
 
-This Tetris implementation follows a **modular, event-driven architecture** with clear separation of concerns:
+This Tetris implementation follows a **modular architecture** with clear separation of concerns, and we plan to layer in event-driven messaging later:
 
 - **Engine Layer**: Manages the game loop, input handling, and timing
 - **Game Layer**: Contains game-specific logic (board, tetrominoes, scoring)
@@ -22,6 +22,7 @@ The architecture is designed to be:
 - **Testable**: Each module can be tested in isolation
 - **Maintainable**: Clear boundaries between systems
 - **Extensible**: Easy to add new features without breaking existing code
+- **Event-ready**: Modules can adopt event-driven communication as needs emerge
 - **LLM-Friendly**: Well-documented with clear patterns for AI-assisted development
 
 ---
@@ -244,62 +245,23 @@ function checkCollision(
 
 ### 7. Rendering Pipeline
 
-The renderer uses **Canvas 2D API** with double buffering:
+Rendering is driven by the `GameLoop` render callback registered in `main.ts`. The callback:
 
-```typescript
-class Renderer {
-  private ctx: CanvasRenderingContext2D;
-  private cellSize = 30;
+1. Clears the canvas with a neon gradient background.
+2. Draws a faint grid so the board keeps its 10×20 proportions.
+3. Renders locked cells with neon glow using `state.board`.
+4. Draws the current tetromino with glow effects on top of the board.
+5. Strokes the canvas border and overlays the game/idle messages when needed.
 
-  render(gameState: GameState): void {
-    this.clear();
-    this.renderBoard(gameState.board);
-    this.renderGhostPiece(gameState.currentPiece);
-    this.renderCurrentPiece(gameState.currentPiece);
-    this.renderUI(gameState);
-  }
-
-  private renderCell(x: number, y: number, color: string): void {
-    // Draw cell with border and gradient
-  }
-}
-```
-
-**Rendering Layers:**
-1. Background grid
-2. Locked pieces
-3. Ghost piece (preview)
-4. Current piece
-5. UI overlay (score, level)
-   The same statistics feed the DOM stat cards via the GameLoop statistics callback, keeping the info stack synced with the canvas overlay.
+Score, level, and lines stay in sync via the stats callback, which updates DOM elements outside the canvas.
 
 ---
 
 ### 8. State Management
 
-Centralized state using **immutable updates**:
+State is represented by the `GameState` interface (`src/core/types.ts`), which holds the board grid, the current/next piece, the current piece position, and surface statistics such as score, level, lines, and game status. Optional fields (`lockRequested`, `lastSpawnTime`) signal hard drops and spawn debouncing.
 
-```typescript
-interface GameState {
-  board: Board;
-  currentPiece: Tetromino | null;
-  nextPiece: Tetromino;
-  heldPiece: Tetromino | null;
-  score: number;
-  level: number;
-  lines: number;
-  gameStatus: 'playing' | 'paused' | 'gameOver';
-}
-
-class GameStateManager {
-  private state: GameState;
-
-  // All updates return new state (immutable)
-  update(action: GameAction): GameState {
-    return this.reducer(this.state, action);
-  }
-}
-```
+`GameStateManager` owns the mutable state, the `PieceGenerator`, and the gravity accumulator. It exposes lifecycle methods such as `startGame`, `update`, `pause`, `resume`, and `reset`. `update` applies gravity, handles hard-drop lock requests, and defers to `lockPiece` (which clears lines and respawns the next piece) whenever the falling tetromino cannot move down.
 
 ---
 
@@ -332,89 +294,31 @@ class GravityTimer {
 
 ## Module Communication
 
-### Event System
+Components currently coordinate via synchronous method flows. The `GameLoop` calls `InputManager.update` and caches the resulting state, then `GameStateManager.update` applies gravity, locking, and line clears directly on that state.
 
-Modules communicate via **custom events**:
-
-```typescript
-enum GameEvent {
-  PIECE_LOCKED = 'piece:locked',
-  LINE_CLEARED = 'line:cleared',
-  LEVEL_UP = 'level:up',
-  GAME_OVER = 'game:over',
-}
-
-class EventBus {
-  private listeners: Map<GameEvent, Function[]>;
-
-  emit(event: GameEvent, data?: any): void;
-  on(event: GameEvent, callback: Function): void;
-  off(event: GameEvent, callback: Function): void;
-}
+```
+User Input → InputManager → GameStateManager → Board lock / line clearing
 ```
 
-**Example Flow:**
-```
-User Input → InputManager → GameState → Board
-                                ↓
-                          EventBus.emit('piece:locked')
-                                ↓
-                    ┌───────────┴───────────┐
-                    ↓                       ↓
-              ScoreManager            SoundManager
-```
+An EventBus/plugin layer is planned for future releases so that scoring, audio, or analytics systems can react to game events without being hardwired into this core loop.
 
 ---
 
 ## Extensibility Principles
 
-### 1. Plugin Architecture
+The private/public boundaries between `GameLoop`, `InputManager`, and `GameStateManager` keep each system replaceable, so future extensions can be slotted in without touching unrelated modules.
 
-Add new features without modifying core:
+### 1. Plugin Architecture (planned)
 
-```typescript
-interface GamePlugin {
-  name: string;
-  init(game: Game): void;
-  update(deltaTime: number): void;
-  destroy(): void;
-}
-
-// Example: Particle effects plugin
-class ParticlePlugin implements GamePlugin {
-  init(game: Game) {
-    game.events.on(GameEvent.LINE_CLEARED, this.spawnParticles);
-  }
-}
-```
+By keeping the core loop isolated from rendering and scoring, we can add a lightweight plugin registry later that listens to lifecycle hooks (piece lock, line clear) and reacts accordingly. This future extension will likely leverage the EventBus mentioned above.
 
 ### 2. Strategy Pattern
 
-Swap algorithms at runtime:
-
-```typescript
-interface ScoringStrategy {
-  calculateScore(linesCleared: number, level: number): number;
-}
-
-class ClassicScoring implements ScoringStrategy { }
-class ModernScoring implements ScoringStrategy { }
-```
+Scoring, gravity timing, and piece generation are factored into helper modules (`GAME_CONFIG`, `calculateDropSpeed`, `PieceGenerator`), making it easy to swap in alternative strategies (e.g., a different scoring formula) by replacing those helpers or injecting new ones into `GameStateManager`.
 
 ### 3. Dependency Injection
 
-Testable and flexible:
-
-```typescript
-class Game {
-  constructor(
-    private board: Board,
-    private renderer: Renderer,
-    private inputManager: InputManager,
-    private eventBus: EventBus
-  ) {}
-}
-```
+Classes expose their dependencies via constructors (`GameLoop` receives callbacks, `GameStateManager` owns the `PieceGenerator`, `InputManager` accepts key bindings), which keeps the public API testable and ready for future DI frameworks or fixtures.
 
 ---
 
@@ -428,7 +332,7 @@ When working with an LLM to extend this codebase:
 4. **Write tests** before implementation
 5. **Use TODO comments** to guide incremental development
 6. **Document public APIs** with JSDoc
-7. **Follow the event-driven pattern** for cross-module communication
+7. **Follow the current synchronous flow** (GameLoop → InputManager → GameStateManager) until the planned EventBus exists
 
 ---
 

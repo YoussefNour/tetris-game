@@ -5,11 +5,6 @@ import { TETROMINO_COLORS } from '@core/types';
  * Tetromino shape definitions for all 7 pieces.
  * Each piece has 4 rotation states (or fewer for symmetric pieces).
  *
- * TODO: Implement the following:
- * - Rotation logic with SRS wall kicks
- * - Piece factory for creating new pieces
- * - Rotation state management
- *
  * @see ARCHITECTURE.md for tetromino structure
  * @see GAME_DESIGN.md for piece specifications
  */
@@ -166,7 +161,6 @@ const TETROMINO_SHAPES: Record<TetrominoType, number[][][]> = {
 
 /**
  * Create a new tetromino of the specified type
- * TODO: Implement piece creation
  *
  * @param type - The type of tetromino to create
  * @returns A new Tetromino instance
@@ -185,8 +179,7 @@ export function createTetromino(type: TetrominoType): Tetromino {
 }
 
 /**
- * Rotate a tetromino
- * TODO: Implement SRS rotation with wall kicks
+ * Rotate a tetromino based on the current rotation states
  *
  * @param piece - The tetromino to rotate
  * @param direction - Rotation direction (CW or CCW)
@@ -219,7 +212,6 @@ export function rotateTetromino(piece: Tetromino, direction: RotationDirection):
     );
   }
 
-  // TODO: Add SRS wall kick logic here
   return {
     ...piece,
     shape: newShape,

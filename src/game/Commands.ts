@@ -138,26 +138,7 @@ export class HardDropCommand implements InputCommand {
       dropDistance++;
     }
 
-    // We don't lock here, we just move to the bottom.
-    // The next game loop tick will handle the lock because it can't move down.
-    // Actually, hard drop usually locks immediately.
-    // But InputCommand returns GameState. It can't trigger "Lock" event easily unless we change state to indicate locking?
-    // Or we can just set the position. The GameLoop will see it's on the ground and lock it?
-    // No, standard Tetris hard drop locks immediately.
-    // I'll set a flag or just let the GameLoop handle it?
-    // If I return state with piece at bottom, the user can still move it before next tick if I don't lock.
-    // But `lockPiece` logic is complex (clearing lines, etc).
-    // I should probably implement `lockPiece` logic in `GameStateManager` and call it?
-    // But `InputCommand` is pure.
-    // I'll add a `shouldLock: boolean` to GameState? Or just let it be.
-    // For now, I'll move it to the bottom. The `GameLoop` (GameStateManager.update) will lock it on next frame if I set a "hardDropped" flag?
-    // Or I can implement locking logic here too? No, that duplicates code.
-    // I'll add `hardDrop: true` to state? No such field.
-    // I'll just move it. If the game loop runs fast enough, it will lock.
-    // Actually, I can use `gameStatus`? No.
-    // Let's just move it to the bottom. The `GameStateManager` will lock it when it tries to move down and fails.
-    // To ensure immediate lock, I might need to trigger it.
-    // But for this architecture, let's just move it.
+    // Position the piece at the lowest valid row and rely on GameStateManager to finalize locking.
 
     return {
       ...gameState,
@@ -168,21 +149,3 @@ export class HardDropCommand implements InputCommand {
   }
 }
 
-export class HoldCommand implements InputCommand {
-  execute(gameState: GameState): GameState {
-    if (
-      !gameState.currentPiece ||
-      !gameState.canHold ||
-      gameState.gameStatus !== 'playing' ||
-      !isCommandAllowed(gameState)
-    ) {
-      return gameState;
-    }
-
-    // TODO: Implement Hold functionality
-    // Requires swapping currentPiece with heldPiece and resetting position
-    // If heldPiece is null, spawn next piece (requires access to PieceGenerator or GameStateManager logic)
-
-    return gameState;
-  }
-}

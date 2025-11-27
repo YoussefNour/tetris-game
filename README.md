@@ -70,8 +70,9 @@ This project includes comprehensive documentation optimized for LLM-assisted dev
 | `Space` | Hard Drop |
 | `↑` | Rotate Clockwise |
 | `Z` | Rotate Counter-Clockwise |
-| `C` | Hold Piece |
 | `P` | Pause/Resume |
+
+Hold piece functionality is still in design and currently not bound to a key.
 
 ---
 
@@ -141,7 +142,7 @@ The game follows a **modular, event-driven architecture**:
 **Key Principles:**
 - **Separation of concerns** - Engine, game logic, and rendering are separate
 - **Immutable state** - Game state updates are immutable
-- **Event-driven** - Modules communicate via events
+- **Event-driven (future)** - Modules are modular and we plan to add event-based messaging later
 - **Testable** - Each module can be tested in isolation
 
 See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.

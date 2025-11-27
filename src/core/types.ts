@@ -42,17 +42,11 @@ export interface Tetromino {
   readonly rotationState: number; // 0-3
 }
 
-/**
- * Game state interface
- * TODO: Implement state management with immutable updates
- */
 export interface GameState {
   readonly board: CellType[][];
   readonly currentPiece: Tetromino | null;
   readonly currentPosition: Position;
   readonly nextPiece: Tetromino;
-  readonly heldPiece: Tetromino | null;
-  readonly canHold: boolean;
   readonly score: number;
   readonly level: number;
   readonly lines: number;
@@ -72,7 +66,6 @@ export interface GameStatistics {
 
 /**
  * Input command interface (Command Pattern)
- * TODO: Implement specific commands for each input action
  */
 export interface InputCommand {
   // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
@@ -89,7 +82,6 @@ export const GAME_CONFIG = {
   VISIBLE_HEIGHT: 20,
 
   // Spawn position
-  // TODO: CODE_SMELL - Added to eliminate magic numbers in spawn logic
   SPAWN_POSITION_X: 3,
   SPAWN_POSITION_Y: 0,
 
@@ -132,7 +124,7 @@ export const TETROMINO_COLORS: Record<TetrominoType, string> = {
 
 /**
  * Game events for event-driven architecture
- * TODO: Implement EventBus for cross-module communication
+ * EventBus/plugin system is planned but not yet implemented.
  */
 /* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 export enum GameEvent {

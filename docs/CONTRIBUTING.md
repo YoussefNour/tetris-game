@@ -313,15 +313,13 @@ git commit -m "test(tetromino): add rotation edge cases"
 #### Detailed Commit
 
 ```
-feat(game): add hold piece mechanic
+feat(game): refine rotation handling
 
-Implement the ability to hold a piece and swap it with the current piece.
-This follows the modern Tetris guideline.
+Tighten up the rotation system with full SRS wall kicks and ensure locked pieces remain stable.
 
-- Add heldPiece to GameState
-- Add canHold flag to prevent multiple swaps
-- Update InputManager with 'C' key binding
-- Update Renderer to display held piece
+- Add wall kick offset tables to `RotateCommand`
+- Surface rotation helpers through `Tetromino` utilities
+- Add regression tests for edge-case rotations
 
 Closes #42
 ```

@@ -33,8 +33,6 @@ export class GameStateManager {
       currentPiece: null,
       currentPosition: { x: GAME_CONFIG.SPAWN_POSITION_X, y: GAME_CONFIG.SPAWN_POSITION_Y },
       nextPiece,
-      heldPiece: null,
-      canHold: true,
       score: 0,
       level: 1,
       lines: 0,
@@ -143,7 +141,6 @@ export class GameStateManager {
       currentPiece,
       currentPosition: spawnPosition,
       nextPiece,
-      canHold: true,
       lastSpawnTime: Date.now(),
     };
   }

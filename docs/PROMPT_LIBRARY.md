@@ -47,13 +47,13 @@ Constraints:
 - Must be type-safe
 ```
 
-**Example: Hold Piece Feature**
+**Example: Hold Piece Feature (planning)**
 
 ```
-I want to add a "hold piece" mechanic to the Tetris game.
+I want to plan the "hold piece" mechanic for the Tetris game.
 
 Feature Description:
-Players can press 'C' to swap the current piece with a held piece. This can only be done once per piece drop cycle.
+Players can press 'C' to swap the current piece with a held piece. This is currently a future enhancement.
 
 Requirements:
 - Store one held piece in game state
@@ -63,17 +63,17 @@ Requirements:
 - First hold stores piece and spawns next piece
 
 Affected Modules:
-- GameState: Add heldPiece property and canHold flag
-- InputManager: Add 'C' key binding
-- Renderer: Add hold piece display
-- Game: Add hold logic
+- GameState: Outline heldPiece/canHold fields
+- InputManager: Determine key binding strategy
+- Renderer: Sketch held piece display
+- Game: Describe hold logic flow
 
 Please provide:
-1. Updated GameState interface
-2. Hold piece logic in Game class
-3. InputManager integration
-4. Renderer updates
-5. Unit tests for hold logic
+1. Proposed GameState interface changes
+2. Conceptual hold logic
+3. InputManager integration plan
+4. Renderer ideas
+5. Suggested tests or checks
 ```
 
 ### Add Visual Effect

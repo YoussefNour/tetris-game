@@ -107,26 +107,26 @@ Please provide:
 4. Integration points with existing code
 ```
 
-**Example:**
+**Example (future work):**
 ```
-I want to add a "hold piece" feature to the game.
+I want to plan the "hold piece" feature for the game.
 
 Requirements:
-- Player can press 'C' to swap current piece with held piece
-- Can only hold once per piece (until next lock)
-- First hold stores piece and spawns next piece
-- Held piece is displayed in UI
+- Player can press 'C' to swap current piece with a held piece
+- Can only hold once per piece drop cycle
+- First hold stores the current piece and spawns the next one
+- Held piece would be surfaced in the UI
 
 Context:
 - Related modules: GameState, InputManager, Renderer
-- Existing patterns: Event-driven communication (see EventBus)
+- Existing patterns: GameLoop → InputManager → GameStateManager (future EventBus will broadcast lifecycle hooks)
 - Type definitions: [paste GameState interface]
 
 Please provide:
-1. Updated GameState interface
-2. HoldPiece class implementation
-3. InputManager integration
-4. Renderer updates for hold piece display
+1. Proposed GameState updates
+2. Hold logic description
+3. InputManager integration sketch
+4. Renderer/UX ideas for the held piece
 ```
 
 ### Pattern 2: Debugging

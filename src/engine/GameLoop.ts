@@ -5,14 +5,6 @@ import type { GameStatistics } from '@core/types';
 /**
  * GameLoop manages the main game loop using requestAnimationFrame.
  * Implements fixed timestep for game logic and variable rendering.
- *
- * TODO: Implement the following methods:
- * - start(): Begin the game loop
- * - stop(): Stop the game loop
- * - tick(): Main loop iteration
- * - update(): Fixed timestep game logic update
- * - render(): Variable timestep rendering
- *
  * @see ARCHITECTURE.md for game loop design details
  */
 export class GameLoop {
@@ -36,7 +28,6 @@ export class GameLoop {
 
   /**
    * Callback for rendering
-   * TODO: Connect to renderer
    */
   private renderCallback: ((interpolation: number) => void) | null = null;
 
@@ -191,5 +182,12 @@ export class GameLoop {
    */
   public get running(): boolean {
     return this.isRunning;
+  }
+
+  /**
+   * Get current paused status
+   */
+  public get isPaused(): boolean {
+    return this.paused;
   }
 }
