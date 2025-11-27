@@ -2,10 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Board } from '../src/game/Board';
 import { createTetromino } from '../src/game/Tetromino';
 
-/**
- * Board class tests
- * TODO: Expand test coverage for all Board methods
- */
 describe('Board', () => {
   let board: Board;
 
@@ -53,12 +49,11 @@ describe('Board', () => {
 
     it('should detect collision with board edges', () => {
       const piece = createTetromino('I');
-      // TODO: Add edge collision tests
       expect(board.canPlacePiece(piece, { x: -1, y: 0 })).toBe(false);
+      expect(board.canPlacePiece(piece, { x: board.width, y: 0 })).toBe(false);
     });
 
     it('should detect collision with locked pieces', () => {
-      // TODO: Add locked piece collision tests
       board.setCell(3, 1, 1);
       const piece = createTetromino('O');
       expect(board.canPlacePiece(piece, { x: 3, y: 0 })).toBe(false);
@@ -70,38 +65,56 @@ describe('Board', () => {
       const piece = createTetromino('O');
       board.lockPiece(piece, { x: 0, y: 0 });
       expect(board.isEmpty()).toBe(false);
+      expect(board.getCell(0, 0)).toBe(1);
+      expect(board.getCell(1, 0)).toBe(1);
+      expect(board.getCell(0, 1)).toBe(1);
+      expect(board.getCell(1, 1)).toBe(1);
     });
-
-    // TODO: Add more lock piece tests
   });
 
   describe('clearLines', () => {
     it('should clear single completed line', () => {
-      // Fill bottom row
       for (let x = 0; x < board.width; x++) {
         board.setCell(x, 19, 1);
       }
 
-      const cleared = board.clearLines();
-      expect(cleared).toBe(1);
+      const result = board.clearLines();
+      expect(result.clearedLines).toBe(1);
+      expect(result.clearedRows).toEqual([19]);
       expect(board.isEmpty()).toBe(true);
     });
 
-    it('should clear multiple lines', () => {
-      // TODO: Test multiple line clears
+    it('should clear multiple lines and report cleared rows', () => {
+      for (let x = 0; x < board.width; x++) {
+        board.setCell(x, 18, 1);
+        board.setCell(x, 19, 1);
+      }
+
+      const result = board.clearLines();
+      expect(result.clearedLines).toBe(2);
+      expect(result.clearedRows).toEqual([18, 19]);
+
+      expect(board.getCell(0, 0)).toBe(0);
+      expect(board.isEmpty()).toBe(true);
     });
 
     it('should not clear incomplete lines', () => {
-      // Fill bottom row except one cell
       for (let x = 0; x < board.width - 1; x++) {
         board.setCell(x, 19, 1);
       }
 
-      const cleared = board.clearLines();
-      expect(cleared).toBe(0);
+      const result = board.clearLines();
+      expect(result.clearedLines).toBe(0);
+      expect(result.clearedRows).toEqual([]);
     });
+  });
 
-    // TODO: Add tests for line clearing with gaps
+  describe('grid helpers', () => {
+    it('should return a defensive copy of the grid', () => {
+      const cloned = board.getGrid();
+      cloned[0][0] = 5;
+      expect(board.getCell(0, 0)).toBe(0);
+    });
   });
 
   describe('reset', () => {

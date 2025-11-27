@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { createTetromino, rotateTetromino, PieceGenerator } from '../src/game/Tetromino';
+import { TetrominoType } from '../src/core/types';
+import {
+  createTetromino,
+  getWallKickOffsets,
+  rotateTetromino,
+  PieceGenerator,
+} from '../src/game/Tetromino';
 
-/**
- * Tetromino tests
- * TODO: Add comprehensive rotation and wall kick tests
- */
 describe('Tetromino', () => {
   describe('createTetromino', () => {
     it('should create I-piece', () => {
@@ -21,6 +23,12 @@ describe('Tetromino', () => {
         const piece = createTetromino(type);
         expect(piece.type).toBe(type);
       });
+    });
+
+    it('should throw when type is invalid', () => {
+      expect(() => createTetromino('X' as TetrominoType)).toThrow(
+        'Invalid tetromino type or missing initial shape for type: X'
+      );
     });
   });
 
@@ -47,7 +55,6 @@ describe('Tetromino', () => {
     it('should cycle through rotation states', () => {
       let piece = createTetromino('T');
 
-      // Rotate 4 times clockwise should return to original
       piece = rotateTetromino(piece, 'CW');
       piece = rotateTetromino(piece, 'CW');
       piece = rotateTetromino(piece, 'CW');
@@ -56,7 +63,50 @@ describe('Tetromino', () => {
       expect(piece.rotationState).toBe(0);
     });
 
-    // TODO: Add SRS wall kick tests
+    it('should wrap around two-state pieces', () => {
+      const piece = createTetromino('S');
+      const rotated = rotateTetromino(piece, 'CW');
+      expect(rotated.rotationState).toBe(1);
+      expect(rotateTetromino(rotated, 'CW').rotationState).toBe(0);
+
+      const counterClockwise = rotateTetromino(piece, 'CCW');
+      expect(counterClockwise.rotationState).toBe(1);
+    });
+  });
+
+  describe('getWallKickOffsets', () => {
+    it('should return I piece offsets for a valid rotation pair', () => {
+      const piece = createTetromino('I');
+      expect(getWallKickOffsets(piece, 0, 1)).toEqual([
+        [0, 0],
+        [-2, 0],
+        [1, 0],
+        [-2, -1],
+        [1, 2],
+      ]);
+    });
+
+    it('should return JLSTZ offsets when a key exists', () => {
+      const piece = createTetromino('T');
+      expect(getWallKickOffsets(piece, 0, 1)).toEqual([
+        [0, 0],
+        [-1, 0],
+        [-1, 1],
+        [0, -2],
+        [-1, -2],
+      ]);
+    });
+
+    it('should return fallback offsets when the key is missing', () => {
+      const piece = createTetromino('J');
+      expect(getWallKickOffsets(piece, 2, 0)).toEqual([[0, 0]]);
+    });
+
+    it('should always return zero offsets for the O-piece', () => {
+      const piece = createTetromino('O');
+      expect(getWallKickOffsets(piece, 0, 1)).toEqual([[0, 0]]);
+      expect(getWallKickOffsets(piece, 1, 0)).toEqual([[0, 0]]);
+    });
   });
 
   describe('PieceGenerator', () => {
@@ -71,7 +121,6 @@ describe('Tetromino', () => {
       const generator = new PieceGenerator();
       const pieces = new Set<string>();
 
-      // Generate 7 pieces
       for (let i = 0; i < 7; i++) {
         pieces.add(generator.next().type);
       }
@@ -86,6 +135,18 @@ describe('Tetromino', () => {
       expect(peeked.type).toBe(next.type);
     });
 
-    // TODO: Add randomization distribution tests
+    it('should refill the bag when it becomes empty', () => {
+      const generator = new PieceGenerator();
+      for (let i = 0; i < 7; i++) {
+        generator.next();
+      }
+
+      const secondBatch = [];
+      for (let i = 0; i < 7; i++) {
+        secondBatch.push(generator.next().type);
+      }
+
+      expect(new Set(secondBatch).size).toBe(7);
+    });
   });
 });
