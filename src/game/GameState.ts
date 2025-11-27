@@ -1,6 +1,7 @@
-import type { GameState, Position, CellType } from '@core/types';
+import type { GameState, Position, CellType, GameStatistics } from '@core/types';
 import { GAME_CONFIG } from '@core/types';
 import { Board } from './Board';
+import type { LineClearResult } from './Board';
 import { PieceGenerator } from './Tetromino';
 import { calculateDropSpeed } from '@utils/helpers';
 
@@ -159,7 +160,8 @@ export class GameStateManager {
     board.lockPiece(this.state.currentPiece, this.state.currentPosition);
 
     // Clear lines
-    const linesCleared = board.clearLines();
+    const lineClearResult: LineClearResult = board.clearLines();
+    const linesCleared = lineClearResult.clearedLines;
 
     // Calculate score and level
     const points = this.calculateScore(linesCleared);
@@ -243,5 +245,13 @@ export class GameStateManager {
     this.state = this.createInitialState();
     this.gravityAccumulator = 0;
     this.pieceGenerator = new PieceGenerator(); // Reset bag
+  }
+
+  /**
+   * Get current gameplay statistics
+   */
+  public getStatistics(): GameStatistics {
+    const { score, level, lines } = this.state;
+    return { score, level, lines };
   }
 }

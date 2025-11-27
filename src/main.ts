@@ -3,6 +3,7 @@ import { GameLoop } from '@engine/GameLoop';
 import { InputManager } from '@engine/InputManager';
 import { GameStateManager } from '@game/GameState';
 import { GAME_CONFIG } from '@core/types';
+import type { GameStatistics } from '@core/types';
 import {
   MoveCommand,
   RotateCommand,
@@ -10,6 +11,7 @@ import {
   HardDropCommand,
   HoldCommand,
 } from '@game/Commands';
+import { formatScore } from '@utils/helpers';
 
 /**
  * Main application entry point.
@@ -55,6 +57,25 @@ function main(): void {
   const gameLoop = new GameLoop();
   const inputManager = new InputManager();
 
+  const scoreDisplay = document.getElementById('score');
+  const levelDisplay = document.getElementById('level');
+  const linesDisplay = document.getElementById('lines');
+
+  const updateStatsDisplay = (stats: GameStatistics): void => {
+    if (scoreDisplay) {
+      scoreDisplay.textContent = formatScore(stats.score);
+    }
+    if (levelDisplay) {
+      levelDisplay.textContent = stats.level.toString();
+    }
+    if (linesDisplay) {
+      linesDisplay.textContent = stats.lines.toString();
+    }
+  };
+
+  gameLoop.setStatsCallback(updateStatsDisplay);
+  updateStatsDisplay(gameStateManager.getStatistics());
+
   // Bind input keys
   inputManager.bindKey('ArrowLeft', new MoveCommand(-1, 0));
   inputManager.bindKey('ArrowRight', new MoveCommand(1, 0));
@@ -75,37 +96,73 @@ function main(): void {
 
     // 3. Update game logic (gravity, etc.)
     gameStateManager.update(deltaTime);
+
+    return gameStateManager.getStatistics();
   });
 
   gameLoop.setRenderCallback((_interpolation: number) => {
     const state = gameStateManager.getState();
+    const cellSize = GAME_CONFIG.CELL_SIZE;
 
-    // Clear canvas
-    ctx.fillStyle = '#000';
+    // Background gradient
+    const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    bgGradient.addColorStop(0, '#030017');
+    bgGradient.addColorStop(1, '#1c0941');
+    ctx.fillStyle = bgGradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Render Board
-    const cellSize = GAME_CONFIG.CELL_SIZE;
+    // Backdrop grid
+    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.beginPath();
+    for (let x = 0; x <= GAME_CONFIG.BOARD_WIDTH; x++) {
+      const posX = x * cellSize;
+      ctx.moveTo(posX, 0);
+      ctx.lineTo(posX, canvas.height);
+    }
+    for (let y = 0; y <= GAME_CONFIG.BOARD_HEIGHT; y++) {
+      const posY = y * cellSize;
+      ctx.moveTo(0, posY);
+      ctx.lineTo(canvas.width, posY);
+    }
+    ctx.stroke();
+
+    // Render Board cells with neon glow
+    const neonPalette = ['#ff5ef0', '#34f7ff', '#ffd700', '#ff6b6b', '#a45dff', '#3ef2a1', '#ffb0ff'];
     state.board.forEach((row, y) => {
       row.forEach((cell, x) => {
         if (cell !== 0) {
-          // TODO: Use proper colors based on cell value
-          ctx.fillStyle = '#888';
-          ctx.fillRect(x * cellSize, y * cellSize, cellSize - 1, cellSize - 1);
+          const color = neonPalette[(cell - 1) % neonPalette.length] ?? neonPalette[0];
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = color;
+          ctx.fillRect(
+            x * cellSize + 1,
+            y * cellSize + 1,
+            cellSize - 2,
+            cellSize - 2
+          );
+          ctx.restore();
         }
       });
     });
 
     // Render Current Piece
     if (state.currentPiece) {
-      ctx.fillStyle = state.currentPiece.color;
       const shape = state.currentPiece.shape;
+      const glowColor = state.currentPiece.color;
       shape.forEach((row, r) => {
         row.forEach((cell, c) => {
           if (cell !== 0) {
             const x = (state.currentPosition.x + c) * cellSize;
             const y = (state.currentPosition.y + r) * cellSize;
-            ctx.fillRect(x, y, cellSize - 1, cellSize - 1);
+            ctx.save();
+            ctx.fillStyle = glowColor;
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 18;
+            ctx.fillRect(x + 1, y + 1, cellSize - 2, cellSize - 2);
+            ctx.restore();
           }
         });
       });
@@ -113,11 +170,15 @@ function main(): void {
 
     // Render UI Overlay
     ctx.fillStyle = '#fff';
-    ctx.font = '16px monospace';
+    ctx.font = '700 18px "Space Grotesk", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${state.score}`, 10, 20);
-    ctx.fillText(`Level: ${state.level}`, 10, 40);
-    ctx.fillText(`Lines: ${state.lines}`, 10, 60);
+    ctx.fillText(`Score: ${state.score.toString().padStart(6, '0')}`, 12, 20);
+    ctx.fillText(`Level: ${state.level}`, 12, 42);
+    ctx.fillText(`Lines: ${state.lines}`, 12, 64);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
 
     if (state.gameStatus === 'gameOver') {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';

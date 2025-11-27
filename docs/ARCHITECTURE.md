@@ -256,7 +256,6 @@ class Renderer {
     this.renderBoard(gameState.board);
     this.renderGhostPiece(gameState.currentPiece);
     this.renderCurrentPiece(gameState.currentPiece);
-    this.renderNextPiece(gameState.nextPiece);
     this.renderUI(gameState);
   }
 
@@ -271,7 +270,8 @@ class Renderer {
 2. Locked pieces
 3. Ghost piece (preview)
 4. Current piece
-5. UI overlay (score, level, next piece)
+5. UI overlay (score, level)
+   The same statistics feed the DOM stat cards via the GameLoop statistics callback, keeping the info stack synced with the canvas overlay.
 
 ---
 

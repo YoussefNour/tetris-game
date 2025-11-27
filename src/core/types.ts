@@ -62,10 +62,20 @@ export interface GameState {
 }
 
 /**
+ * Surface-level statistics needed for score UI
+ */
+export interface GameStatistics {
+  readonly score: number;
+  readonly level: number;
+  readonly lines: number;
+}
+
+/**
  * Input command interface (Command Pattern)
  * TODO: Implement specific commands for each input action
  */
 export interface InputCommand {
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   execute(gameState: GameState): GameState;
 }
 
@@ -124,6 +134,7 @@ export const TETROMINO_COLORS: Record<TetrominoType, string> = {
  * Game events for event-driven architecture
  * TODO: Implement EventBus for cross-module communication
  */
+/* eslint-disable no-unused-vars, @typescript-eslint/no-unused-vars */
 export enum GameEvent {
   PIECE_SPAWNED = 'piece:spawned',
   PIECE_MOVED = 'piece:moved',
@@ -135,3 +146,4 @@ export enum GameEvent {
   GAME_PAUSED = 'game:paused',
   GAME_RESUMED = 'game:resumed',
 }
+/* eslint-enable no-unused-vars, @typescript-eslint/no-unused-vars */

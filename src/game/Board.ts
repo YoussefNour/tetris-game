@@ -2,6 +2,14 @@ import type { CellType, Tetromino, Position } from '@core/types';
 import { GAME_CONFIG } from '@core/types';
 
 /**
+ * Result of a line clear operation.
+ */
+export interface LineClearResult {
+  readonly clearedLines: number;
+  readonly clearedRows: number[];
+}
+
+/**
  * Board manages the game grid and piece placement.
  * Handles collision detection, line clearing, and board state.
  *
@@ -140,8 +148,7 @@ export class Board {
    *
    * @returns Number of lines cleared
    */
-  public clearLines(): number {
-    let linesCleared = 0;
+  public clearLines(): LineClearResult {
     const linesToClear: number[] = [];
 
     // Detect completed lines
@@ -162,10 +169,12 @@ export class Board {
     for (const lineY of linesToClear) {
       this.grid.splice(lineY, 1);
       this.grid.unshift(new Array(this.width).fill(0) as CellType[]);
-      linesCleared++;
     }
 
-    return linesCleared;
+    return {
+      clearedLines: linesToClear.length,
+      clearedRows: linesToClear,
+    };
   }
 
   /**

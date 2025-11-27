@@ -1,5 +1,6 @@
 /* eslint-env browser */
-// TODO: CODE_SMELL - Removed unused import (GameState was not used in this file)
+
+import type { GameStatistics } from '@core/types';
 
 /**
  * GameLoop manages the main game loop using requestAnimationFrame.
@@ -24,10 +25,14 @@ export class GameLoop {
   private escapeListenerAttached = false;
 
   /**
-   * Callback for game logic updates
-   * TODO: Connect to game state manager
+   * Callback for game logic updates that can optionally return stats.
    */
-  private updateCallback: ((deltaTime: number) => void) | null = null;
+  private updateCallback: ((deltaTime: number) => GameStatistics | void) | null = null;
+
+  /**
+   * Callback for statistics updates (score/level/lines)
+   */
+  private statsCallback: ((stats: GameStatistics) => void) | null = null;
 
   /**
    * Callback for rendering
@@ -39,7 +44,7 @@ export class GameLoop {
    * Set the update callback
    * @param callback - Function to call for game logic updates
    */
-  public setUpdateCallback(callback: (deltaTime: number) => void): void {
+  public setUpdateCallback(callback: (deltaTime: number) => GameStatistics | void): void {
     this.updateCallback = callback;
   }
 
@@ -49,6 +54,13 @@ export class GameLoop {
    */
   public setRenderCallback(callback: (interpolation: number) => void): void {
     this.renderCallback = callback;
+  }
+
+  /**
+   * Register a stats callback (score, level, lines)
+   */
+  public setStatsCallback(callback: (stats: GameStatistics) => void): void {
+    this.statsCallback = callback;
   }
 
   /**
@@ -153,9 +165,13 @@ export class GameLoop {
     this.accumulator += cappedDeltaTime;
 
     // Fixed timestep updates
+    const updateCallback = this.updateCallback;
     while (this.accumulator >= this.fixedDeltaTime) {
-      if (this.updateCallback) {
-        this.updateCallback(this.fixedDeltaTime);
+      if (updateCallback) {
+        const stats = updateCallback(this.fixedDeltaTime);
+        if (stats && this.statsCallback) {
+          this.statsCallback(stats);
+        }
       }
       this.accumulator -= this.fixedDeltaTime;
     }

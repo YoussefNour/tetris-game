@@ -14,6 +14,8 @@ A production-ready Tetris game built with **TypeScript**, **Vite**, and **HTML5 
 - 🔄 **Super Rotation System (SRS)** with wall kicks
 - 📊 **Scoring system** with combos and T-spins
 - 🎨 **Modern UI** with dark theme
+- 📱 **Responsive layout** that keeps the grid constrained to the viewport height
+- 🧮 **Compact info column** keeps the playfield, stats, and controls side-by-side so the 10:20 board ratio never stretches vertically
 - ⚡ **60 FPS** fixed timestep game loop
 - 🧪 **Comprehensive testing** with Vitest
 - 📚 **Extensive documentation** for LLM-assisted development

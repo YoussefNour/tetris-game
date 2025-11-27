@@ -8,58 +8,57 @@
   </head>
   <body>
     <div id="app">
-      <h1>🎮 Tetris</h1>
-
-      <div class="game-container">
-        <!-- Main game canvas -->
-        <canvas id="game-canvas"></canvas>
-
-        <!-- Info panel -->
-        <div class="info-panel">
-          <div class="info-box">
-            <h2>Score</h2>
-            <p id="score">000000</p>
-          </div>
-
-          <div class="info-box">
-            <h2>Level</h2>
-            <p id="level">1</p>
-          </div>
-
-          <div class="info-box">
-            <h2>Lines</h2>
-            <p id="lines">0</p>
-          </div>
-
-          <div class="info-box">
-            <h2>Next</h2>
-            <canvas id="next-canvas" width="120" height="120"></canvas>
-          </div>
+      <section class="game-grid">
+        <div class="glass-panel playfield-frame">
+          <div class="top-beam"></div>
+          <canvas id="game-canvas"></canvas>
+          <div class="scanlines"></div>
         </div>
-      </div>
 
-      <!-- Controls guide -->
-      <div class="controls">
-        <h2>Controls</h2>
-        <ul>
-          <li><kbd>←</kbd> Move Left</li>
-          <li><kbd>→</kbd> Move Right</li>
-          <li><kbd>↓</kbd> Soft Drop</li>
-          <li><kbd>Space</kbd> Hard Drop</li>
-          <li><kbd>↑</kbd> Rotate CW</li>
-          <li><kbd>Z</kbd> Rotate CCW</li>
-          <li><kbd>C</kbd> Hold Piece</li>
-          <li><kbd>P</kbd> Pause</li>
-        </ul>
-      </div>
+        <div class="glass-panel info-stack">
+          <header class="hero">
+            <h1>🎮 Neon Tetris</h1>
+            <p class="tagline">Pulse through glowing grids, chase the synthwave drop, and keep the stack alive.</p>
+          </header>
 
-      <div class="footer">
+          <div class="stat-row">
+            <div class="stat-card">
+              <h3>Score</h3>
+              <p id="score">000000</p>
+            </div>
+            <div class="stat-card">
+              <h3>Level</h3>
+              <p id="level">1</p>
+            </div>
+            <div class="stat-card">
+              <h3>Lines</h3>
+              <p id="lines">0</p>
+            </div>
+          </div>
+
+          <section class="controls retro-controls">
+            <h2>Controls</h2>
+            <ul>
+              <li><kbd>←</kbd> Move Left</li>
+              <li><kbd>→</kbd> Move Right</li>
+              <li><kbd>↓</kbd> Soft Drop</li>
+              <li><kbd>Space</kbd> Hard Drop</li>
+              <li><kbd>↑</kbd> Rotate CW</li>
+              <li><kbd>Z</kbd> Rotate CCW</li>
+              <li><kbd>C</kbd> Hold Piece</li>
+              <li><kbd>P</kbd> Pause</li>
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <footer class="footer">
         <p>
           Built with TypeScript + Vite + Canvas |
           <a href="docs/ARCHITECTURE.md">Architecture</a> |
           <a href="docs/LLM_WORKFLOW.md">LLM Workflow</a>
         </p>
-      </div>
+      </footer>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

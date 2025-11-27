@@ -2,6 +2,7 @@
 
 ## Table of Contents
 - [Game Rules](#game-rules)
+- [Visual Style](#visual-style)
 - [Tetromino Types](#tetromino-types)
 - [Scoring System](#scoring-system)
 - [Level Progression](#level-progression)
@@ -41,6 +42,16 @@ Arrange falling tetrominoes to create complete horizontal lines, which are then 
    - Pieces lock above the visible playfield
 
 ---
+
+## Visual Style
+
+The UI embraces a synthwave-inspired presentation to make the gameplay resemble a neon arcade cabinet.
+
+- **Color & Glow**: Deep indigo gradients (#030017 → #1c0941) anchor the background while electric pink (#ff5ef0) and aqua (#34f7ff) strokes illuminate the panels and pieces.
+- **Typography**: `Press Start 2P` headlines pair with `Space Grotesk` body copy so text stays legible while still feeling pixelated.
+- **Layout**: The playfield is framed in a glassy panel with a glowing grid and scanlines while stat cards (score, level, lines, next preview) follow in a companion column that adapts gracefully to smaller screens.
+  Stat cards (score/level/lines) beneath the grid share the same numbers as the canvas overlay thanks to the GameLoop stats callback, ensuring the DOM mirrors every change in `GameStateManager`.
+- **Controls**: Command labels sit inside neon-bordered pills arranged in a responsive grid to avoid extra wrappers and keep the focus on the playfield.
 
 ## Tetromino Types
 
